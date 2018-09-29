@@ -98,8 +98,11 @@ class vc_helper():
 	def principal_components(self, norm, pca_dataset, n_pcs):
 		
 		pca = PCA(n_components=n_pcs)
+		'''
 		pca.fit(pca_dataset)
 		pca_out = pca.transform(norm)
+		'''
+		pca_out = pca.fit_transform(norm)
 		return pca_out		
 
 	def sample_loss_grid(self, norm, labels, pca_dataset, gamma, n_pcs, seeds):
@@ -196,7 +199,7 @@ class vc_helper():
 		seeds = self.seeds
 
 		xp, yp = self.bayesian_optimisation(
-			n_iters=8,
+			n_iters=self.biters,
 			sample_loss=self.sample_loss_bayesian,
 			bounds = bounds,
 			n_pre_samples=1,
@@ -208,10 +211,10 @@ class vc_helper():
 	def testing_predictions(self, test_data, model, num_pcs, gamma=False, max_iter=1000000, mean=False):
 
 		pca_data = self.principal_components(test_data, self.pca, num_pcs)
-		train_pca_data = self.principal_components(self.X, self.pca, num_pcs)
-
 		if mean == False:
 			return np.array([p[1] for p in model.predict_proba(pca_data)])
+
+		train_pca_data = self.principal_components(self.X, self.pca, num_pcs)
 
 		predicted_probs = ""
 		for seed in self.seeds:
@@ -256,7 +259,7 @@ class vc_helper():
 
 		return -1 * expected_improvement
 
-
+	# adapted from https://github.com/thuijskens/bayesian-optimization
 	def sample_next_hyperparameter(self, acquisition_func, gaussian_process, evaluated_loss, greater_is_better=False,
 								   bounds=(0, 10), n_restarts=25):
 
@@ -278,7 +281,7 @@ class vc_helper():
 
 		return best_x
 
-
+	#adapted from https://github.com/thuijskens/bayesian-optimization
 	def bayesian_optimisation(self, n_iters, sample_loss, bounds, x0=None, n_pre_samples=5,
 							  gp_params=None, random_search=False, alpha=1e-5, epsilon=1e-7):
 
